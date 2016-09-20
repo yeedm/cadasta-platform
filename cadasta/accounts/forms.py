@@ -3,8 +3,10 @@ from django.conf import settings
 from django.utils.translation import ugettext as _
 
 from .models import User
+from parsley.decorators import parsleyfy
 
 
+@parsleyfy
 class RegisterForm(forms.ModelForm):
     email = forms.EmailField(required=True)
     password1 = forms.CharField(widget=forms.PasswordInput())
