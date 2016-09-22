@@ -1,3 +1,4 @@
+from django.core.urlresolvers import reverse
 from rest_framework import serializers
 from core.serializers import FieldSelectorSerializer
 from xforms.models import XFormSubmission
@@ -18,16 +19,22 @@ class XFormListSerializer(FieldSelectorSerializer,
     downloadUrl = serializers.SerializerMethodField('get_xml_form')
 
     def get_xml_form(self, obj):
-        if obj.xml_form.url.startswith('/media/s3/uploads/'):
-            if self.context['request'].META['SERVER_PROTOCOL'] == 'HTTP/1.1':
-                url = 'http://'
-            else:
-                url = 'https://'
-            url += self.context['request'].META.get('HTTP_HOST',
-                                                    'localhost:8000')
-            return url + obj.xml_form.url
+        return reverse('api:v1:questionnaires:detail',
+                       kwargs={
+                        'organization': obj.project.organization.slug,
+                        'project': obj.project.slug
+                       })
 
-        return obj.xml_form.url
+        # if obj.xml_form.url.startswith('/media/s3/uploads/'):
+        #     if self.context['request'].META['SERVER_PROTOCOL'] == 'HTTP/1.1':
+        #         url = 'http://'
+        #     else:
+        #         url = 'https://'
+        #     url += self.context['request'].META.get('HTTP_HOST',
+        #                                             'localhost:8000')
+        #     return url + obj.xml_form.url
+
+        # return obj.xml_form.url
 
 
 class XFormSubmissionSerializer(FieldSelectorSerializer,

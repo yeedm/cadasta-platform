@@ -617,6 +617,12 @@ class ProjectEdit(mixins.ProjectMixin,
             }
         )
 
+    def post(self, *args, **kwargs):
+        if self.get_project().has_records:
+            return self.get(*args, **kwargs)
+        else:
+            return super().post(*args, **kwargs)
+
 
 class ProjectEditGeometry(ProjectEdit, generic.UpdateView):
     form_class = forms.ProjectAddExtents

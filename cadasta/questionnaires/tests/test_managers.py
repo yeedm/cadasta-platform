@@ -1,7 +1,6 @@
 import os
 
 import pytest
-from lxml import etree
 
 from buckets.test.storage import FakeS3Storage
 from django.conf import settings
@@ -183,27 +182,6 @@ class QuestionnaireManagerTest(TestCase):
         assert models.QuestionGroup.objects.exists() is False
         assert models.Question.objects.exists() is False
 
-    def test_insert_version_attr(self):
-        xform = open(
-            path + '/questionnaires/tests/files/ekcjvf464y5afks6b33qkct3.xml',
-            'r').read()
-        id_string = 'jurassic_park_survey'
-        version = '2016072518593012'
-        filename = 'ekcjvf464y5afks6b33qkct3'
-        xml = models.Questionnaire.objects.insert_version_attribute(
-            xform, filename, version
-        )
-        root = etree.fromstring(xml)
-        ns = {'xf': 'http://www.w3.org/2002/xforms'}
-        root_node = root.find(
-            './/xf:instance/xf:{root_node}'.format(
-                root_node=filename
-            ), namespaces=ns
-        )
-        assert root_node is not None
-        assert root_node.get('id') == id_string
-        assert root_node.get('version') == version
-
     def test_unique_together_idstring_version(self):
         project = ProjectFactory.create()
         q1 = factories.QuestionnaireFactory.create(
@@ -245,7 +223,13 @@ class QuestionManagerTest(TestCase):
             'hint': 'For this field (type=integer)',
             'label': 'Integer',
             'name': 'my_int',
-            'type': 'integer'
+            'type': 'integer',
+            'default': 'default val',
+            'hint': 'An informative hint',
+            'bind': {
+                'relevant': '${party_id}="abc123"',
+                'required': 'yes'
+            }
         }
         questionnaire = factories.QuestionnaireFactory.create()
 
@@ -259,6 +243,10 @@ class QuestionManagerTest(TestCase):
         assert model.label == question_dict['label']
         assert model.name == question_dict['name']
         assert model.type == 'IN'
+        assert model.default == 'default val'
+        assert model.hint == 'An informative hint'
+        assert model.relevant == '${party_id}="abc123"'
+        assert model.required is True
 
     def test_create_from_dict_with_group(self):
         question_dict = {

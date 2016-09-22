@@ -1,10 +1,5 @@
-import hashlib
 import itertools
-import os
 import re
-from datetime import datetime
-
-from lxml import etree
 
 from django.apps import apps
 from django.conf import settings
@@ -135,24 +130,20 @@ class QuestionnaireManager(models.Manager):
                 instance.filename = json.get('name')
                 instance.title = json.get('title')
                 instance.id_string = json.get('id_string')
-                instance.version = int(
-                    datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-4]
-                )
-                instance.md5_hash = self.get_hash(
-                    instance.filename, instance.id_string, instance.version
-                )
 
+                # TODO: This needs to go, error handling needs to be changed
+                # again
                 survey = create_survey_element_from_dict(json)
-                xml_form = survey.xml().toxml()
+                survey.xml().toxml()
                 # insert version attr into the xform instance root node
-                xml = self.insert_version_attribute(
-                    xml_form, instance.filename, instance.version
-                )
-                name = os.path.join(instance.xml_form.field.upload_to,
-                                    os.path.basename(instance.filename))
-                url = instance.xml_form.storage.save(
-                    '{}.xml'.format(name), xml)
-                instance.xml_form = url
+                # xml = self.insert_version_attribute(
+                #     xml_form, instance.filename, instance.version
+                # )
+                # name = os.path.join(instance.xml_form.field.upload_to,
+                #                     os.path.basename(instance.filename))
+                # url = instance.xml_form.storage.save(
+                #     '{}.xml'.format(name), xml)
+                # instance.xml_form = url
 
                 instance.save()
 
@@ -175,24 +166,6 @@ class QuestionnaireManager(models.Manager):
         except PyXFormError as e:
             raise InvalidXLSForm([str(e)])
 
-    def get_hash(self, filename, id_string, version):
-        string = str(filename) + str(id_string) + str(version)
-        return hashlib.md5(string.encode()).hexdigest()
-
-    def insert_version_attribute(self, xform, root_node, version):
-        ns = {'xf': 'http://www.w3.org/2002/xforms'}
-        root = etree.fromstring(xform)
-        inst = root.find(
-            './/xf:instance/xf:{root_node}'.format(
-                root_node=root_node
-            ), namespaces=ns
-        )
-        inst.set('version', str(version))
-        xml = etree.tostring(
-            root, method='xml', encoding='utf-8', pretty_print=True
-        )
-        return xml
-
 
 class QuestionGroupManager(models.Manager):
 
@@ -201,6 +174,7 @@ class QuestionGroupManager(models.Manager):
 
         instance.name = dict.get('name')
         instance.label = dict.get('label')
+
         instance.save()
 
         create_children(
@@ -223,19 +197,21 @@ class QuestionManager(models.Manager):
         instance = self.model(**kwargs)
         type_dict = {name: code for code, name in instance.TYPE_CHOICES}
 
+        relevant = None
+        required = False
+        bind = dict.get('bind')
+        if bind:
+            relevant = bind.get('relevant', None)
+            required = True if bind.get('required', 'no') == 'yes' else False
+
         instance.type = type_dict[dict.get('type')]
-
-        # try:
-        #     instance.type = type_dict[dict.get('type')]
-        # except KeyError as e:
-        #     errors.append(
-        #         _('{type} is not an accepted question type').format(type=e)
-        #     )
-
         instance.name = dict.get('name')
         instance.label = dict.get('label')
-        instance.required = dict.get('required', False)
+        instance.required = required
         instance.constraint = dict.get('constraint')
+        instance.default = dict.get('default', None)
+        instance.hint = dict.get('hint', None)
+        instance.relevant = relevant
         instance.save()
 
         if instance.has_options:

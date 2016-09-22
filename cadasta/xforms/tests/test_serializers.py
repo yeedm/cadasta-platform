@@ -52,10 +52,9 @@ class XFormListSerializerTest(UserTestCase, TestCase):
         assert serializer.data['formID'] == questionnaire.data['id_string']
         assert serializer.data['name'] == questionnaire.data['title']
         assert serializer.data['version'] == questionnaire.data['version']
-        protocol = 'https' if https else 'http'
         assert (serializer.data['downloadUrl'] ==
-                protocol + '://localhost:8000' +
-                questionnaire.data['xml_form'])
+                '/api/v1/organizations/{}/projects/{}/questionnaire/'.format(
+                    project.organization.slug, project.slug))
         assert serializer.data['hash'] == questionnaire.data['md5_hash']
 
     def test_serialize(self):

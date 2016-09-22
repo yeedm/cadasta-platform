@@ -66,7 +66,9 @@ class XFormListTest(APITestCase, UserTestCase, TestCase):
 
         assert response.status_code == 200
         assert questionnaire.md5_hash in response.content
-        assert questionnaire.xml_form.url in response.content
+        assert ('/v1/organizations/{}/projects/{}/questionnaire/'.format(
+                    questionnaire.project.organization.slug,
+                    questionnaire.project.slug) in response.content)
         assert str(questionnaire.version) in response.content
 
     def test_get_xforms_with_unauthroized_user(self):
@@ -75,7 +77,9 @@ class XFormListTest(APITestCase, UserTestCase, TestCase):
 
         assert response.status_code == 200
         assert questionnaire.md5_hash not in response.content
-        assert questionnaire.xml_form.url not in response.content
+        assert ('/v1/organizations/{}/projects/{}/questionnaire/'.format(
+                    questionnaire.project.organization.slug,
+                    questionnaire.project.slug) not in response.content)
 
     def test_get_xforms_with_superuser(self):
         self.user.assign_policies(self.superuser_role)
@@ -84,7 +88,9 @@ class XFormListTest(APITestCase, UserTestCase, TestCase):
 
         assert response.status_code == 200
         assert questionnaire.md5_hash in response.content
-        assert questionnaire.xml_form.url in response.content
+        assert ('/v1/organizations/{}/projects/{}/questionnaire/'.format(
+                    questionnaire.project.organization.slug,
+                    questionnaire.project.slug) in response.content)
 
     def test_get_xforms_with_no_superuser(self):
         OrganizationRole.objects.create(
