@@ -53,6 +53,8 @@ def create_options(options, question, errors=[]):
         for o, idx in zip(options, itertools.count()):
             QuestionOption = apps.get_model('questionnaires', 'QuestionOption')
 
+            if 'label' in o and not isinstance(o['label'], str):
+                o['label'] = o['label']['default']
             QuestionOption.objects.create(question=question, index=idx+1, **o)
     else:
         errors.append(_("Please provide at least one option for field"
@@ -104,15 +106,31 @@ def create_attrs_schema(project=None, dict=None, content_type=None, errors=[]):
 
     for field, index in zip(fields, itertools.count(1)):
         long_name = field.get('long_name', field['name'])
+        if not isinstance(long_name, str):
+            long_name = long_name['default']
         attr_type = AttributeType.objects.get(name=field['attr_type'])
         choices = field.get('choices', [])
         choice_labels = field.get('choice_labels', None)
+        if choice_labels is not None:
+            choice_labels = list(map(
+                lambda c: c['default'] if not isinstance(c, str) else c,
+                choice_labels
+            ))
         default = field.get('default', '')
         required = field.get('required', False)
         omit = True if field.get('omit', '') == 'yes' else False
+        print('name:', field['name'], field['name'].__class__)
+        print('long_name:', long_name, long_name.__class__)
+        print('attr_type:', attr_type, attr_type.__class__)
+        print('index:', index, index.__class__)
+        print('choices:', choices, choices.__class__)
+        print('choice_labels:', choice_labels, choice_labels.__class__)
+        print('default:', default, default.__class__)
+        print('required:', required, required.__class__)
+        print('omit:', omit, omit.__class__)
         Attribute.objects.create(
             schema=schema_obj,
-            name=field['name'], long_name=long_name,
+            name=field['name'], long_name=str(long_name),
             attr_type=attr_type, index=index,
             choices=choices, choice_labels=choice_labels,
             default=default, required=required, omit=omit
@@ -201,6 +219,8 @@ class QuestionGroupManager(models.Manager):
 
         instance.name = dict.get('name')
         instance.label = dict.get('label')
+        if instance.label is not None and not isinstance(instance.label, str):
+            instance.label = instance.label['default']
         instance.save()
 
         create_children(
@@ -234,6 +254,8 @@ class QuestionManager(models.Manager):
 
         instance.name = dict.get('name')
         instance.label = dict.get('label')
+        if instance.label is not None and not isinstance(instance.label, str):
+            instance.label = instance.label['default']
         instance.required = dict.get('required', False)
         instance.constraint = dict.get('constraint')
         instance.save()
