@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.utils.translation import ugettext as _
+from django.utils.translation import check_for_language
 from jsonattrs.models import Attribute, AttributeType, Schema
 from pyxform.builder import create_survey_element_from_dict
 from pyxform.errors import PyXFormError
@@ -137,6 +138,28 @@ def create_attrs_schema(project=None, dict=None, content_type=None, errors=[]):
         )
 
 
+def multilingual_label_check(children):
+    has_multi = False
+    for c in children:
+        if 'label' in c and isinstance(c['label'], dict):
+            has_multi = True
+            for lang in c['label'].keys():
+                if not check_for_language(lang):
+                    raise InvalidXLSForm(
+                        ["Label language code '{}' unknown".format(lang)]
+                    )
+        # Note the order of the short-cut "or" in the following two
+        # statements: it's like this to force the recursive call to
+        # multilingual_label_check to make sure we check the language
+        # codes everywhere, rather than dropping out as soon as we
+        # find that the form is multilingual.
+        if 'children' in c:
+            has_multi = multilingual_label_check(c['children']) or has_multi
+        if 'choices' in c:
+            has_multi = multilingual_label_check(c['choices']) or has_multi
+    return has_multi
+
+
 class QuestionnaireManager(models.Manager):
 
     def create_from_form(self, xls_form=None, original_file=None,
@@ -150,6 +173,22 @@ class QuestionnaireManager(models.Manager):
                     project=project
                 )
                 json = parse_file_to_json(instance.xls_form.file.name)
+                has_default_language = (
+                    'default_language' in json and
+                    json['default_language'] != 'default'
+                )
+                is_multilingual = multilingual_label_check(json['children'])
+                if is_multilingual and not has_default_language:
+                    raise InvalidXLSForm(["Multilingual XLS forms must have "
+                                          "a default_language setting"])
+                if (has_default_language and
+                   not check_for_language(json['default_language'])):
+                    raise InvalidXLSForm(
+                        ["Default language code '{}' unknown".format(
+                            json['default_language']
+                        )]
+                    )
+                instance.default_language = json['default_language']
                 instance.filename = json.get('name')
                 instance.title = json.get('title')
                 instance.id_string = json.get('id_string')
