@@ -5,13 +5,14 @@ import re
 from datetime import datetime
 
 from lxml import etree
+from xml.dom.minidom import Element
 
 from django.apps import apps
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.utils.translation import ugettext as _
-from django.utils.translation import check_for_language
+from django.utils.translation import check_for_language, get_language_info
 from jsonattrs.models import Attribute, AttributeType, Schema
 from pyxform.builder import create_survey_element_from_dict
 from pyxform.errors import PyXFormError
@@ -160,6 +161,17 @@ def multilingual_label_check(children):
     return has_multi
 
 
+def fix_languages(node):
+    if (isinstance(node, Element) and
+       node.tagName == 'translation' and node.hasAttribute('lang')):
+        iso_lang = node.getAttribute('lang')
+        local_lang = get_language_info(iso_lang)['name_local']
+        node.setAttribute('lang', local_lang)
+    else:
+        for child in node.childNodes:
+            fix_languages(child)
+
+
 class QuestionnaireManager(models.Manager):
 
     def create_from_form(self, xls_form=None, original_file=None,
@@ -200,7 +212,9 @@ class QuestionnaireManager(models.Manager):
                 )
 
                 survey = create_survey_element_from_dict(json)
-                xml_form = survey.xml().toxml()
+                xml_form = survey.xml()
+                fix_languages(xml_form)
+                xml_form = xml_form.toxml()
                 # insert version attr into the xform instance root node
                 xml = self.insert_version_attribute(
                     xml_form, instance.filename, instance.version
