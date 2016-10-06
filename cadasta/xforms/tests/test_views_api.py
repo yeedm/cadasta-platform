@@ -431,6 +431,10 @@ class XFormSubmissionTest(APITestCase, UserTestCase, TestCase):
                                 content_type='multipart/form-data')
         assert response.status_code == 201
 
+        assert Party.objects.count() == 2
+        assert SpatialUnit.objects.count() == 1
+        assert TenureRelationship.objects.count() == 2
+
         party_one = Party.objects.get(name='Bilbo Baggins')
         party_two = Party.objects.get(name='Samwise Gamgee')
         location = SpatialUnit.objects.get(type='MI')
@@ -456,6 +460,10 @@ class XFormSubmissionTest(APITestCase, UserTestCase, TestCase):
                                 content_type='multipart/form-data')
         assert response.status_code == 201
 
+        assert Party.objects.count() == 1
+        assert SpatialUnit.objects.count() == 1
+        assert TenureRelationship.objects.count() == 1
+
         party = Party.objects.get(name='Bilbo Baggins')
         location = SpatialUnit.objects.get(type='MI')
         tenure = TenureRelationship.objects.get(
@@ -480,6 +488,10 @@ class XFormSubmissionTest(APITestCase, UserTestCase, TestCase):
         response = self.request(method='POST', user=self.user, post_data=data,
                                 content_type='multipart/form-data')
         assert response.status_code == 201
+
+        assert Party.objects.count() == 1
+        assert SpatialUnit.objects.count() == 2
+        assert TenureRelationship.objects.count() == 2
 
         party = Party.objects.get(name='Bilbo Baggins')
         location_one = SpatialUnit.objects.get(type='MI')
@@ -516,6 +528,10 @@ class XFormSubmissionTest(APITestCase, UserTestCase, TestCase):
         tenure = TenureRelationship.objects.get(
             spatial_unit=location)
 
+        assert Party.objects.count() == 1
+        assert SpatialUnit.objects.count() == 1
+        assert TenureRelationship.objects.count() == 1
+
         assert tenure.party == party
         self._test_resource('test_audio_one', location)
         self._test_resource('test_image_one', location)
@@ -530,7 +546,11 @@ class XFormSubmissionTest(APITestCase, UserTestCase, TestCase):
                                        'test_image_two',
                                        'test_image_three',
                                        'test_image_four',
-                                       'test_image_five'],
+                                       'test_image_five',
+                                       'test_image_six',
+                                       'test_image_seven',
+                                       'test_image_eight',
+                                       'test_image_nine'],
                                 audio=['test_audio_one'])
 
         response = self.request(method='POST', user=self.user, post_data=data,
@@ -546,13 +566,22 @@ class XFormSubmissionTest(APITestCase, UserTestCase, TestCase):
             spatial_unit=location_two)
         assert tenure_one.party == party and tenure_two.party == party
 
+        assert Party.objects.count() == 1
+        assert SpatialUnit.objects.count() == 2
+        assert TenureRelationship.objects.count() == 2
+
         self._test_resource('test_audio_one', location_one)
         self._test_resource('test_image_one', location_one)
-        self._test_resource('test_image_two', tenure_one)
-        self._test_resource('test_image_two', tenure_two)
+        self._test_resource('test_image_two', location_one)
         self._test_resource('test_image_three', location_two)
-        self._test_resource('test_image_four', party)
-        self._test_resource('test_image_five', party)
+        self._test_resource('test_image_four', location_two)
+        self._test_resource('test_image_five', tenure_one)
+        self._test_resource('test_image_five', tenure_two)
+        self._test_resource('test_image_six', tenure_one)
+        self._test_resource('test_image_six', tenure_two)
+        self._test_resource('test_image_seven', party)
+        self._test_resource('test_image_eight', party)
+        self._test_resource('test_image_nine', party)
 
     def test_form_repeat_party_minus_tenure(self):
         self._create_questionnaire(
@@ -568,6 +597,10 @@ class XFormSubmissionTest(APITestCase, UserTestCase, TestCase):
         response = self.request(method='POST', user=self.user, post_data=data,
                                 content_type='multipart/form-data')
         assert response.status_code == 201
+
+        assert Party.objects.count() == 2
+        assert SpatialUnit.objects.count() == 1
+        assert TenureRelationship.objects.count() == 2
 
         party_one = Party.objects.get(name='Bilbo Baggins')
         party_two = Party.objects.get(name='Samwise Gamgee')

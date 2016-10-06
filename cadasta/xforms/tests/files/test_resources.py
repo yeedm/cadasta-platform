@@ -479,34 +479,42 @@ REPEAT_MINUS_TENURE = '''<?xml version=\'1.0\' ?>
         <deviceid>00:bb:3a:44:d0:fb</deviceid>
         <title />
         <location_repeat>
+            <location_choice>geotrace</location_choice>
             <location_geometry>40.6890612 -73.9925067 0.0 0.0;
             </location_geometry>
             <location_type>MI</location_type>
             <location_resource_audio>test_audio_one.mp3</location_resource_audio>
-            <location_photo>test_image_one.png</location_photo>
+            <location_resource_photo>test_image_one.png</location_resource_photo>
+            <location_resource_photo2>test_image_two.png</location_resource_photo2>
             <location_attributes>
                 <name>Middle Earth</name>
+                <infrastructure>water</infrastructure>
             </location_attributes>
         </location_repeat>
         <location_repeat>
+            <location_choice>geotrace</location_choice>
             <location_geometry>40.6890612 -73.9925067 0.0 0.0;
             </location_geometry>
             <location_type>CB</location_type>
             <location_resource_audio />
-            <location_photo>test_image_three.png</location_photo>
+            <location_resource_photo>test_image_three.png</location_resource_photo>
+            <location_resource_photo2>test_image_four.png</location_resource_photo2>
             <location_attributes>
                 <name>Middle Earth</name>
+                <infrastructure>water food electricity</infrastructure>
             </location_attributes>
         </location_repeat>
         <tenure_type>CR</tenure_type>
         <tenure_relationship_attributes>
             <notes>Tenure relationship notes.</notes>
         </tenure_relationship_attributes>
-        <tenure_resource_photo>test_image_two.png</tenure_resource_photo>
+        <tenure_resource_photo>test_image_five.png</tenure_resource_photo>
+        <tenure_resource_photo2>test_image_six.png</tenure_resource_photo2>
         <party_type>IN</party_type>
         <party_name>Bilbo Baggins</party_name>
-        <party_photo>test_image_four.png</party_photo>
-        <party_resource_photo>test_image_five.png</party_resource_photo>
+        <party_photo>test_image_seven.png</party_photo>
+        <party_resource_photo>test_image_eight.png</party_resource_photo>
+        <party_resource_photo2>test_image_nine.png</party_resource_photo2>
         <party_attributes_default>
             <notes>Party attribute default notes.</notes>
         </party_attributes_default>
