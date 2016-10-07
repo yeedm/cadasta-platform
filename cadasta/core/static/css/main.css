@@ -3784,6 +3784,8 @@ table th[class*="col-"] {
   .public-private-widget > div {
     top: 0; } }
 
+/* =Date Picker
+-------------------------------------------------------------- */
 .ui-datepicker {
   z-index: 2000 !important; }
   .ui-datepicker .ui-widget-content {
@@ -4460,6 +4462,16 @@ h1, h2 {
 
 h3, h4, h5 {
   letter-spacing: -0.3px; }
+
+h4.div {
+  border-top: 1px solid #e7e8ea;
+  border-bottom: 2px solid #e7e8ea;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 14px;
+  opacity: 0.7;
+  padding: 8px;
+  background: #f2f4f7; }
 
 label {
   font-weight: 400; }
@@ -5707,7 +5719,7 @@ textarea.form-control {
 .file-well {
   padding: 10px 20px; }
 
-.file-input {
+.file-input, #id_select_file-file {
   margin: 14px 0;
   height: 34px;
   padding: 0;
@@ -5728,6 +5740,9 @@ textarea.form-control {
 
 .input-group-addon {
   background: #f2f4f7; }
+
+.well {
+  margin-bottom: 10px; }
 
 /* =Table for sort and filter
 -------------------------------------------------------------- */
@@ -5859,7 +5874,7 @@ table#select-list {
   .table > thead > tr > th, .table > thead > tr > td, .table > tbody > tr > th, .table > tbody > tr > td, .table > tfoot > tr > th, .table > tfoot > tr > td {
     padding: 8px;
     font-size: 12px; }
-  .form-group, .form-control, .public-private-widget, .s3-buckets .file-input {
+  .form-group, .form-control, .public-private-widget, .s3-buckets .file-input, #id_select_file-file {
     font-size: 12px; }
   .form-control {
     padding: 6px; } }
@@ -5998,8 +6013,10 @@ div.add-btn-btm {
   margin-bottom: 20px; }
 
 .alert-full {
+  width: 100%;
   max-width: 100%;
   text-align: left;
+  margin-bottom: 20px;
   display: table;
   box-shadow: none;
   -moz-box-shadow: none;
@@ -6007,7 +6024,7 @@ div.add-btn-btm {
   .alert-full > div {
     display: table-cell;
     vertical-align: top;
-    padding: 4px; }
+    padding: 2px; }
 
 .form-narrow .alert-full, .narrow .alert-full {
   margin-bottom: 20px; }

@@ -1,0 +1,29 @@
+{% extends "organization/project_wrapper.html" %} 
+
+{% load i18n %}
+
+{% block top-nav %}project-single{% endblock %}
+
+{% block page_title %}{% trans "Import Data" %} | {% endblock %}
+
+{% block content %}
+
+<form method="POST" action="" enctype="multipart/form-data" novalidate>
+  {% csrf_token %}
+  <div class="col-md-12 content-single">
+    <div class="row">
+      <!-- Main text  -->
+      <div class="col-md-12 main-text">
+        <div class="page-title">
+          <h2 class="pull-left">{% trans "Import project data" %}</h2>
+        </div>
+
+        {% block step_content %}{% endblock %}
+
+      </div>
+      <!-- /main text  -->
+    </div>
+  </div>
+</form>
+
+{% endblock %}
