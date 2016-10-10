@@ -78,7 +78,7 @@ class Questionnaire(RandomIDModel):
 class QuestionGroup(MultilingualLabelsMixin, RandomIDModel):
     name = models.CharField(max_length=100)
     label = models.CharField(max_length=2500, null=True, blank=True)
-    label_or_translations = JSONField()
+    label_xlat = JSONField()
     questionnaire = models.ForeignKey(Questionnaire,
                                       related_name='question_groups')
 
@@ -118,7 +118,7 @@ class Question(MultilingualLabelsMixin, RandomIDModel):
 
     name = models.CharField(max_length=100)
     label = models.CharField(max_length=2500, null=True, blank=True)
-    label_or_translations = JSONField()
+    label_xlat = JSONField()
     type = models.CharField(max_length=2, choices=TYPE_CHOICES)
     required = models.BooleanField(default=False)
     constraint = models.CharField(max_length=50, null=True, blank=True)
@@ -145,7 +145,7 @@ class QuestionOption(MultilingualLabelsMixin, RandomIDModel):
 
     name = models.CharField(max_length=100)
     label = models.CharField(max_length=200)
-    label_or_translations = JSONField()
+    label_xlat = JSONField()
     index = models.IntegerField(null=False)
     question = models.ForeignKey(Question, related_name='options')
 
