@@ -115,14 +115,14 @@ class QuestionGroupTestCase(TestCase):
 
     def test_invalid_questiongroup(self):
         data = [{
-            'name': "location_attributes",
+            'label': "location attributes",
             'questions': [{
                 'label': 'Start',
                 'type': "ST",
             }]
         }]
         errors = validators.validate_question_groups(data)
-        assert errors == [{'label': ['This field is required.'],
+        assert errors == [{'name': ['This field is required.'],
                            'questions': [
                                 {'name': ['This field is required.']}
                             ]}

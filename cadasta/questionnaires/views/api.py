@@ -3,7 +3,7 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework import generics, mixins, status
 from rest_framework.response import Response
-from rest_framework.renderers import JSONRenderer
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
 from tutelary.mixins import APIPermissionRequiredMixin
 
 from organization.models import Project
@@ -16,7 +16,7 @@ from ..renderer.xform import XFormRenderer
 class QuestionnaireDetail(APIPermissionRequiredMixin,
                           mixins.CreateModelMixin,
                           generics.RetrieveUpdateAPIView):
-    renderer_classes = (JSONRenderer, XFormRenderer, )
+    renderer_classes = (JSONRenderer, XFormRenderer, BrowsableAPIRenderer)
 
     def patch_actions(self, request):
         try:
@@ -51,6 +51,7 @@ class QuestionnaireDetail(APIPermissionRequiredMixin,
             return Response({'xls_form': exc.errors},
                             status=status.HTTP_400_BAD_REQUEST)
         else:
+            print(exc.__dict__)
             return super().handle_exception(exc)
 
     def get_object(self):

@@ -19,7 +19,7 @@ QUESTION_SCHEMA = {
 
 QUESTION_GROUP_SCHEMA = {
     'name': {'type': 'string', 'required': True},
-    'label': {'type': 'string', 'required': True},
+    'label': {'type': 'string'},
 }
 
 QUESTION_OPTION_SCHEMA = {
@@ -106,7 +106,7 @@ def validate_questionnaire(json):
     if any([q for q in question_errs]):
         errors['questions'] = question_errs
 
-    group_errs = validate_questions(json.get('question_groups', []))
+    group_errs = validate_question_groups(json.get('question_groups', []))
     if any([q for q in group_errs]):
         errors['question_groups'] = group_errs
 

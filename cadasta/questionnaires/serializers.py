@@ -144,6 +144,7 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
             return instance
         else:
             questions = validated_data.pop('questions', [])
+            question_groups = validated_data.pop('question_groups', [])
             instance = models.Questionnaire.objects.create(
                 project=project,
                 **validated_data)
@@ -154,6 +155,13 @@ class QuestionnaireSerializer(serializers.ModelSerializer):
                 context={'questionnaire_id': instance.id})
             question_serializer.is_valid(raise_exception=True)
             question_serializer.save()
+
+            group_serializer = QuestionGroupSerializer(
+                data=question_groups,
+                many=True,
+                context={'questionnaire_id': instance.id})
+            group_serializer.is_valid(raise_exception=True)
+            group_serializer.save()
 
             project.current_questionnaire = instance.id
             project.save()

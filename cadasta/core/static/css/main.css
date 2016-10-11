@@ -3784,6 +3784,8 @@ table th[class*="col-"] {
   .public-private-widget > div {
     top: 0; } }
 
+/* =Date Picker
+-------------------------------------------------------------- */
 .ui-datepicker {
   z-index: 2000 !important; }
   .ui-datepicker .ui-widget-content {
