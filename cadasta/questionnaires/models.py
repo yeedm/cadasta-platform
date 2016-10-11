@@ -23,17 +23,17 @@ class MultilingualLabelsMixin:
 
     @property
     def label(self):
-        if isinstance(self.label_or_translations, dict):
-            return self.label_or_translations.get(
+        if isinstance(self.label_xlat, dict):
+            return self.label_xlat.get(
                 get_language(),
-                self.label_or_translations[self.default_language]
+                self.label_xlat[self.default_language]
             )
         else:
-            return self.label_or_translations
+            return self.label_xlat
 
     @label.setter
     def label(self, value):
-        self.label_or_translations = value
+        self.label_xlat = value
 
 
 @permissioned_model
@@ -77,8 +77,7 @@ class Questionnaire(RandomIDModel):
 
 class QuestionGroup(MultilingualLabelsMixin, RandomIDModel):
     name = models.CharField(max_length=100)
-    label = models.CharField(max_length=2500, null=True, blank=True)
-    label_xlat = JSONField()
+    label_xlat = JSONField(default={})
     questionnaire = models.ForeignKey(Questionnaire,
                                       related_name='question_groups')
 
@@ -117,8 +116,7 @@ class Question(MultilingualLabelsMixin, RandomIDModel):
                     ('PN', 'phonenumber'))
 
     name = models.CharField(max_length=100)
-    label = models.CharField(max_length=2500, null=True, blank=True)
-    label_xlat = JSONField()
+    label_xlat = JSONField(default={})
     type = models.CharField(max_length=2, choices=TYPE_CHOICES)
     required = models.BooleanField(default=False)
     constraint = models.CharField(max_length=50, null=True, blank=True)
@@ -144,8 +142,7 @@ class QuestionOption(MultilingualLabelsMixin, RandomIDModel):
         return self.question.questionnaire
 
     name = models.CharField(max_length=100)
-    label = models.CharField(max_length=200)
-    label_xlat = JSONField()
+    label_xlat = JSONField(default={})
     index = models.IntegerField(null=False)
     question = models.ForeignKey(Question, related_name='options')
 

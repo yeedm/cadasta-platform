@@ -12,7 +12,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.utils.translation import ugettext as _
-from django.utils.translation import check_for_language, get_language_info
+from django.utils.translation import get_language_info
 from jsonattrs.models import Attribute, AttributeType, Schema
 from pyxform.builder import create_survey_element_from_dict
 from pyxform.errors import PyXFormError
@@ -22,11 +22,13 @@ from questionnaires.exceptions import InvalidXLSForm
 ATTRIBUTE_GROUPS = settings.ATTRIBUTE_GROUPS
 
 
-def create_children(children, errors=[], project=None, kwargs={}):
+def create_children(children, errors=[], project=None,
+                    default_language='', kwargs={}):
     if children:
         for c in children:
             if c.get('type') == 'repeat':
-                create_children(c['children'], errors, project, kwargs)
+                create_children(c['children'], errors, project,
+                                default_language, kwargs)
             elif c.get('type') == 'group':
                 model_name = 'QuestionGroup'
 
@@ -40,7 +42,9 @@ def create_children(children, errors=[], project=None, kwargs={}):
                             app_label=app_label, model=model)
                         create_attrs_schema(
                             project=project, dict=c,
-                            content_type=content_type, errors=errors
+                            content_type=content_type,
+                            default_language=default_language,
+                            errors=errors
                         )
             else:
                 model_name = 'Question'
@@ -55,15 +59,17 @@ def create_options(options, question, errors=[]):
         for o, idx in zip(options, itertools.count()):
             QuestionOption = apps.get_model('questionnaires', 'QuestionOption')
 
-            if 'label' in o and not isinstance(o['label'], str):
-                o['label'] = o['label']['default']
+            if 'label' in o:
+                o['label_xlat'] = o['label']
+                del o['label']
             QuestionOption.objects.create(question=question, index=idx+1, **o)
     else:
         errors.append(_("Please provide at least one option for field"
                         " '{field_name}'".format(field_name=question.name)))
 
 
-def create_attrs_schema(project=None, dict=None, content_type=None, errors=[]):
+def create_attrs_schema(project=None, dict=None, content_type=None,
+                        default_language='', errors=[]):
     fields = []
     selectors = (project.organization.pk, project.pk,
                  project.current_questionnaire)
@@ -78,8 +84,10 @@ def create_attrs_schema(project=None, dict=None, content_type=None, errors=[]):
             selector = re.sub("'", '', clauses[1])
             selectors += (selector,)
 
+    print('====> default_language =', default_language)
     schema_obj = Schema.objects.create(content_type=content_type,
-                                       selectors=selectors)
+                                       selectors=selectors,
+                                       default_language=default_language)
 
     for c in dict.get('children'):
         field = {}
@@ -108,35 +116,30 @@ def create_attrs_schema(project=None, dict=None, content_type=None, errors=[]):
 
     for field, index in zip(fields, itertools.count(1)):
         long_name = field.get('long_name', field['name'])
-        if not isinstance(long_name, str):
-            long_name = long_name['default']
         attr_type = AttributeType.objects.get(name=field['attr_type'])
         choices = field.get('choices', [])
         choice_labels = field.get('choice_labels', None)
-        if choice_labels is not None:
-            choice_labels = list(map(
-                lambda c: c['default'] if not isinstance(c, str) else c,
-                choice_labels
-            ))
         default = field.get('default', '')
         required = field.get('required', False)
         omit = True if field.get('omit', '') == 'yes' else False
-        print('name:', field['name'], field['name'].__class__)
-        print('long_name:', long_name, long_name.__class__)
-        print('attr_type:', attr_type, attr_type.__class__)
-        print('index:', index, index.__class__)
-        print('choices:', choices, choices.__class__)
-        print('choice_labels:', choice_labels, choice_labels.__class__)
-        print('default:', default, default.__class__)
-        print('required:', required, required.__class__)
-        print('omit:', omit, omit.__class__)
         Attribute.objects.create(
             schema=schema_obj,
-            name=field['name'], long_name=str(long_name),
+            name=field['name'], long_name=long_name,
             attr_type=attr_type, index=index,
             choices=choices, choice_labels=choice_labels,
             default=default, required=required, omit=omit
         )
+
+
+# Python's builtin check_for_language does weird transformations of
+# locale names...
+
+def check_for_language(lang):
+    try:
+        get_language_info(lang)
+        return True
+    except:
+        return False
 
 
 def multilingual_label_check(children):
@@ -145,7 +148,7 @@ def multilingual_label_check(children):
         if 'label' in c and isinstance(c['label'], dict):
             has_multi = True
             for lang in c['label'].keys():
-                if not check_for_language(lang):
+                if lang != 'default' and not check_for_language(lang):
                     raise InvalidXLSForm(
                         ["Label language code '{}' unknown".format(lang)]
                     )
@@ -189,10 +192,6 @@ class QuestionnaireManager(models.Manager):
                     'default_language' in json and
                     json['default_language'] != 'default'
                 )
-                is_multilingual = multilingual_label_check(json['children'])
-                if is_multilingual and not has_default_language:
-                    raise InvalidXLSForm(["Multilingual XLS forms must have "
-                                          "a default_language setting"])
                 if (has_default_language and
                    not check_for_language(json['default_language'])):
                     raise InvalidXLSForm(
@@ -200,7 +199,13 @@ class QuestionnaireManager(models.Manager):
                             json['default_language']
                         )]
                     )
+                is_multilingual = multilingual_label_check(json['children'])
+                if is_multilingual and not has_default_language:
+                    raise InvalidXLSForm(["Multilingual XLS forms must have "
+                                          "a default_language setting"])
                 instance.default_language = json['default_language']
+                if instance.default_language == 'default':
+                    instance.default_language = ''
                 instance.filename = json.get('name')
                 instance.title = json.get('title')
                 instance.id_string = json.get('id_string')
@@ -234,6 +239,7 @@ class QuestionnaireManager(models.Manager):
                     children=json.get('children'),
                     errors=errors,
                     project=project,
+                    default_language=instance.default_language,
                     kwargs={'questionnaire': instance}
                 )
 
@@ -271,9 +277,7 @@ class QuestionGroupManager(models.Manager):
         instance = self.model(questionnaire=questionnaire)
 
         instance.name = dict.get('name')
-        instance.label = dict.get('label')
-        if instance.label is not None and not isinstance(instance.label, str):
-            instance.label = instance.label['default']
+        instance.label_xlat = dict.get('label', {})
         instance.save()
 
         create_children(
@@ -306,9 +310,7 @@ class QuestionManager(models.Manager):
         #     )
 
         instance.name = dict.get('name')
-        instance.label = dict.get('label')
-        if instance.label is not None and not isinstance(instance.label, str):
-            instance.label = instance.label['default']
+        instance.label_xlat = dict.get('label', {})
         instance.required = dict.get('required', False)
         instance.constraint = dict.get('constraint')
         instance.save()
